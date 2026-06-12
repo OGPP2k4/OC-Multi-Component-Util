@@ -9,48 +9,42 @@ local module = {
 	cards = {},
 }
 
-print('sound.clear(), sound.delay(), sound.process() will affect all sound cards')
-
-for address, _ in component.list('sound') do
-	table.insert(module.cards, address)
+local card_ids = {}
+do
+	local tableIdx = 1
+	for address, _ in component.list('sound') do
+		module.cards[tableIdx] = address
+		card_ids[address] = tableIdx
+		tableIdx = tableIdx + 1
+	end
 end
 
 local function getValidCardChannel(channel)
 	if channel < 1 then
-		print('Channel Must Over 1')
-		return nil, nil, nil
+		return false, 'Channel Must Over 1'
 	end
 	local cardId = (channel - 1) // module:channel_count() + 1
 	local cardChannel = (channel - 1) % module:channel_count() + 1
 	local cardAddress = module.cards[cardId]
 	if cardAddress == nil then
-		print('TOO BIG CHANNEL: ' ..
-		tostring(channel) .. ' > ' .. tostring(module:channel_count() * #module.cards))
-		return nil, nil, nil
+		return false, 'TOO BIG CHANNEL: ' ..
+			tostring(channel) .. ' > ' .. tostring(module:channel_count() * #module.cards)
 	end
-	return cardAddress, cardChannel, cardId
+	return cardAddress, cardChannel
 end
 
 local function invokeModulation(channel, modIndex, fmam, intensity)
 	local reason = ''
-	local soundCard1, channel1, cardId1 = getValidCardChannel(channel)
-	local soundCard2, channel2, cardId2 = getValidCardChannel(modIndex)
+	local soundCard1, channel1 = getValidCardChannel(channel)
+	local soundCard2, channel2 = getValidCardChannel(modIndex)
 	if soundCard1 == nil or soundCard2 == nil then
 		reason = 'Invalid Channel'
 	elseif soundCard1 ~= soundCard2 then
-		local cardchR = {
-			modIndex = {
-				min = tostring(cardId1 * module:channel_count()),
-				max = tostring((cardId1 - 1) * module:channel_count() + 1),
-			},
-			channel = {
-				min = tostring(cardId2 * module:channel_count()),
-				max = tostring((cardId2 - 1) * module:channel_count() + 1),
-			},
-		}
 		reason = 'CHANNEL ID MUST BE BETWEEN SAME CARD' ..
-		cardchR.modIndex.min .. ' >= modIndex >= ' .. cardchR.modIndex.max .. ' OR ' ..
-		cardchR.channel.min .. ' >= channel >= ' .. cardchR.channel.max
+			tostring(card_ids[soundCard1] * module:channel_count()) .. ' >= modIndex >= '..
+			tostring((card_ids[soundCard1] - 1) * module:channel_count() + 1) .. ' OR ' ..
+			tostring(card_ids[soundCard2] * module:channel_count()) .. ' >= channel >= ' ..
+			tostring((card_ids[soundCard2] - 1) * module:channel_count() + 1)
 	elseif channel1 == channel2 then
 		reason = 'CANNOT USE SAME CHANNEL ID'
 	else
@@ -59,7 +53,7 @@ local function invokeModulation(channel, modIndex, fmam, intensity)
 		elseif fmam == 'AM' then
 			return component.invoke(soundCard1, 'setAM', channel1, channel2)
 		else
-			reason = 'fmam need FM or AM'
+			reason = 'FM need intensity'
 		end
 	end
 	return false, reason
@@ -173,14 +167,6 @@ end
 
 function module:process()
 	return invokeAllCards('process')
-end
-
-if require('shell') then
-	local shell = require('shell')
-	local args, options = shell.parse(...)
-	if args[1] == 'reset' then
-		module:FullReset()
-	end
 end
 
 return module

@@ -16,7 +16,7 @@ end
 local function getValidCardChannel(channel)
 	if channel < 1 then
 		print('Channel Must Over 1')
-		return nil, nil, nil
+		return nil, nil
 	end
 	local cardId = (channel - 1) // module:channel_count() + 1
 	local cardChannel = (channel - 1) % module:channel_count() + 1
@@ -24,9 +24,9 @@ local function getValidCardChannel(channel)
 	if cardAddress == nil then
 		print('TOO BIG CHANNEL: ' ..
 			tostring(channel) .. ' > ' .. tostring(module:channel_count() * #module.cards))
-		return nil, nil, nil
+		return nil, nil
 	end
-	return cardAddress, cardChannel, cardId
+	return cardAddress, cardChannel
 end
 
 local function invokeValidChannel(channel, method, ...)
