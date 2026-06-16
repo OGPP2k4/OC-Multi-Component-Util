@@ -80,19 +80,6 @@ local function invokeAllCards(method, ...)
 	return allok, reasons
 end
 
-function module:FullReset()
-	for i = 1, (#self.cards * self:channel_count()), 1 do
-		self:resetEnvelope(i)
-		self:resetAM(i)
-		self:resetFM(i)
-		self:setWave(i, self:modes().square)
-		self:close(i)
-		self:setFrequency(i, 0)
-	end
-	self:clear()
-	self:setTotalVolume(1)
-end
-
 function module:channel_count()
 	return component.invoke(self.cards[1], 'channel_count')
 end
@@ -167,6 +154,19 @@ end
 
 function module:process()
 	return invokeAllCards('process')
+end
+
+function module:FullReset()
+	for i = 1, (#self.cards * self:channel_count()), 1 do
+		self:resetEnvelope(i)
+		self:resetAM(i)
+		self:resetFM(i)
+		self:setWave(i, self:modes().square)
+		self:close(i)
+		self:setFrequency(i, 0)
+	end
+	self:clear()
+	self:setTotalVolume(1)
 end
 
 return module
