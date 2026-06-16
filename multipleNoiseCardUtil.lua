@@ -12,18 +12,20 @@ local module = {
 for address, _ in component.list('noise') do
 	table.insert(module.cards, address)
 end
+local channels = component.invoke(module.cards[1], 'channel_count')
+local waves = component.invoke(self.cards[1], 'modes')
 
 local function getValidCardChannel(channel)
 	if channel < 1 then
 		print('Channel Must Over 1')
 		return nil, nil
 	end
-	local cardId = (channel - 1) // module:channel_count() + 1
-	local cardChannel = (channel - 1) % module:channel_count() + 1
+	local cardId = (channel - 1) // channels + 1
+	local cardChannel = (channel - 1) % channels + 1
 	local cardAddress = module.cards[cardId]
 	if cardAddress == nil then
 		print('TOO BIG CHANNEL: ' ..
-			tostring(channel) .. ' > ' .. tostring(module:channel_count() * #module.cards))
+			tostring(channel) .. ' > ' .. tostring(module:channel_count()))
 		return nil, nil
 	end
 	return cardAddress, cardChannel
@@ -38,11 +40,11 @@ local function invokeValidChannel(channel, method, ...)
 end
 
 function module:channel_count()
-	return component.invoke(self.cards[1], 'channel_count')
+	return channels * #module.cards
 end
 
 function module:modes()
-	return component.invoke(self.cards[1], 'modes')
+	return waves
 end
 
 function module:getMode(channel)

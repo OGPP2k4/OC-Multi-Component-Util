@@ -10,6 +10,8 @@ local module = {
 }
 
 local card_ids = {}
+local channels = 0
+local waves = {}
 do
 	local tableIdx = 1
 	for address, _ in component.list('sound') do
@@ -17,18 +19,20 @@ do
 		card_ids[address] = tableIdx
 		tableIdx = tableIdx + 1
 	end
+	channels = component.invoke(module.cards[1], 'channel_count')
+	waves = component.invoke(module.cards[1], 'modes')
 end
 
 local function getValidCardChannel(channel)
 	if channel < 1 then
 		return false, 'Channel Must Over 1'
 	end
-	local cardId = (channel - 1) // module:channel_count() + 1
-	local cardChannel = (channel - 1) % module:channel_count() + 1
+	local cardId = (channel - 1) // channels + 1
+	local cardChannel = (channel - 1) % channels + 1
 	local cardAddress = module.cards[cardId]
 	if cardAddress == nil then
 		return false, 'TOO BIG CHANNEL: ' ..
-			tostring(channel) .. ' > ' .. tostring(module:channel_count() * #module.cards)
+			tostring(channel) .. ' > ' .. tostring(module:channel_count())
 	end
 	return cardAddress, cardChannel
 end
@@ -41,10 +45,10 @@ local function invokeModulation(channel, modIndex, fmam, intensity)
 		reason = 'Invalid Channel'
 	elseif soundCard1 ~= soundCard2 then
 		reason = 'CHANNEL ID MUST BE BETWEEN SAME CARD' ..
-			tostring(card_ids[soundCard1] * module:channel_count()) .. ' >= modIndex >= '..
-			tostring((card_ids[soundCard1] - 1) * module:channel_count() + 1) .. ' OR ' ..
-			tostring(card_ids[soundCard2] * module:channel_count()) .. ' >= channel >= ' ..
-			tostring((card_ids[soundCard2] - 1) * module:channel_count() + 1)
+			tostring(card_ids[soundCard1] * channels) .. ' >= modIndex >= '..
+			tostring((card_ids[soundCard1] - 1) * channels + 1) .. ' OR ' ..
+			tostring(card_ids[soundCard2] * channels) .. ' >= channel >= ' ..
+			tostring((card_ids[soundCard2] - 1) * channels + 1)
 	elseif channel1 == channel2 then
 		reason = 'CANNOT USE SAME CHANNEL ID'
 	else
@@ -81,11 +85,11 @@ local function invokeAllCards(method, ...)
 end
 
 function module:channel_count()
-	return component.invoke(self.cards[1], 'channel_count')
+	return channels * #module.cards
 end
 
 function module:modes()
-	return component.invoke(self.cards[1], 'modes')
+	return waves
 end
 
 function module:setTotalVolume(volume)
@@ -157,7 +161,7 @@ function module:process()
 end
 
 function module:FullReset()
-	for i = 1, (#self.cards * self:channel_count()), 1 do
+	for i = 1, (#self.cards * self.channels), 1 do
 		self:resetEnvelope(i)
 		self:resetAM(i)
 		self:resetFM(i)
