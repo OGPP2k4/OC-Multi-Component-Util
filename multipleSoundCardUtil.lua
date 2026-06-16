@@ -161,11 +161,11 @@ function module:process()
 end
 
 function module:FullReset()
-	for i = 1, (#self.cards * self.channels), 1 do
+	for i = 1, (#self.cards * channels), 1 do
 		self:resetEnvelope(i)
 		self:resetAM(i)
 		self:resetFM(i)
-		self:setWave(i, self:modes().square)
+		self:setWave(i, waves.square)
 		self:close(i)
 		self:setFrequency(i, 0)
 	end
