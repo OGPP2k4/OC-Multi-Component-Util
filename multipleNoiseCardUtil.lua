@@ -13,7 +13,7 @@ for address, _ in component.list('noise') do
 	table.insert(module.cards, address)
 end
 local channels = component.invoke(module.cards[1], 'channel_count')
-local waves = component.invoke(self.cards[1], 'modes')
+local waves = component.invoke(module.cards[1], 'modes')
 
 local function getValidCardChannel(channel)
 	if channel < 1 then
@@ -98,9 +98,9 @@ function module:isReady()
 	return ready
 end
 
-function module:play(channels)
+function module:play(channelsheet)
 	local channelsPerCard = {}
-	for i, note in pairs(channels) do
+	for i, note in pairs(channelsheet) do
 		local address, channel = getValidCardChannel(i)
 		channelsPerCard[address][channel] = note
 	end
